@@ -72,34 +72,33 @@ const Product = mongoose.models.Product || mongoose.model('Product', productSche
 const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
 // ══════════════════════════════════════════════════════════════
-//  API ROUTES
+//  API ROUTES (Standardized)
 // ══════════════════════════════════════════════════════════════
 
-// Health check
-app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date() }));
+const router = express.Router();
 
-app.get("/products", async (req, res) => {
+router.get("/health", (req, res) => res.json({ status: "ok", env: process.env.NODE_ENV || 'production' }));
+
+router.get("/products", async (req, res) => {
   try {
     let query = {};
-    if (req.query.category && req.query.category !== "All") {
-      query.category = req.query.category;
-    }
+    if (req.query.category && req.query.category !== "All") query.category = req.query.category;
     const products = await Product.find(query).sort({ createdAt: -1 });
     res.json(products);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.get("/products/:id", async (req, res) => {
+router.get("/products/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Not found" });
-    res.json(product);
+    const p = await Product.findById(req.params.id);
+    if (!p) return res.status(404).json({ message: "Not found" });
+    res.json(p);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.post("/add-product", upload.single("image"), async (req, res) => {
+router.post("/add-product", upload.single("image"), async (req, res) => {
   try {
-    const product = new Product({
+    const p = new Product({
       name: req.body.name || "",
       price: Number(req.body.price) || 0,
       category: req.body.category || "",
@@ -109,73 +108,62 @@ app.post("/add-product", upload.single("image"), async (req, res) => {
       image: req.file ? req.file.path : "",
       status: "available"
     });
-    const savedProduct = await product.save();
-    res.json({ success: true, message: "Product listed!", id: savedProduct._id });
+    await p.save();
+    res.json({ success: true, message: "Listed!", id: p._id });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-app.delete("/products/:id", async (req, res) => {
+router.delete("/products/:id", async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.post("/buy/:productId", async (req, res) => {
+router.post("/buy/:productId", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.productId);
-    if (!product) return res.status(404).json({ success: false, message: "Product not found." });
-    if (product.status === "sold") return res.status(400).json({ success: false, message: "Sold." });
-
+    const p = await Product.findById(req.params.productId);
+    if (!p) return res.status(404).json({ success: false, message: "Not found" });
     const order = new Order({
-      productId: product._id,
-      productName: product.name,
-      productImage: product.image,
-      category: product.category,
-      price: product.price,
-      seller: product.seller,
-      sellerPhone: product.phone,
-      buyerName: req.body.buyerName || "Anonymous",
-      buyerPhone: req.body.buyerPhone || "",
-      buyerEmail: req.body.buyerEmail || "",
-      note: req.body.note || "",
-      status: "confirmed"
+      productId: p._id, productName: p.name, productImage: p.image,
+      category: p.category, price: p.price, seller: p.seller, sellerPhone: p.phone,
+      buyerName: req.body.buyerName, buyerPhone: req.body.buyerPhone,
+      buyerEmail: req.body.buyerEmail, note: req.body.note, status: "confirmed"
     });
     await order.save();
-    product.status = "sold";
-    await product.save();
+    p.status = "sold"; await p.save();
     res.json({ success: true, message: "Order placed!", orderId: order._id });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-app.get("/orders", async (req, res) => {
+router.get("/orders", async (req, res) => {
   try {
-    let query = {};
-    if (req.query.phone) query.buyerPhone = req.query.phone;
-    const orders = await Order.find(query).sort({ orderedAt: -1 });
-    res.json(orders);
+    let q = {}; if (req.query.phone) q.buyerPhone = req.query.phone;
+    const o = await Order.find(q).sort({ orderedAt: -1 });
+    res.json(o);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.get("/orders/:id", async (req, res) => {
+router.patch("/orders/:id/cancel", async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Not found" });
-    res.json(order);
+    const o = await Order.findById(req.params.id);
+    if (!o) return res.status(404).json({ message: "Not found" });
+    o.status = "cancelled"; await o.save();
+    const p = await Product.findById(o.productId);
+    if (p) { p.status = "available"; await p.save(); }
+    res.json({ success: true });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
-app.patch("/orders/:id/cancel", async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id);
-    if (!order) return res.status(404).json({ message: "Not found" });
-    order.status = "cancelled";
-    await order.save();
-    const product = await Product.findById(order.productId);
-    if (product) { product.status = "available"; await product.save(); }
-    res.json({ success: true, message: "Cancelled." });
-  } catch (e) { res.status(500).json({ message: e.message }); }
+// Use router for both / and /api to ensure Vercel rewrites work correctly
+app.use("/api", router);
+app.use("/", router);
+
+app.use((req, res) => {
+  console.log("⚠️ 404 Route Not Found:", req.url);
+  res.status(404).json({ message: "Not Found", path: req.url });
 });
 
 // Export the Express app
 module.exports = app;
+
