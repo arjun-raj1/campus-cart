@@ -193,7 +193,7 @@
     const container = document.getElementById('ordersContainer');
     container.innerHTML = '<div class="spin-wrap"></div>';
     try {
-      const res  = await fetch(`http://localhost:3000/orders?phone=${phone}`);
+      const res  = await fetch(`/orders?phone=${phone}`);
       const data = await res.json();
       if(!data.length){
         container.innerHTML = `<div class="empty"><div>📦</div><p>No orders found for this number.</p><a href="index.html" class="btn btn-primary">Browse Marketplace</a></div>`;
@@ -217,7 +217,7 @@
         return `
           <div class="order-card" id="card-${o._id}">
             <div class="order-img">
-              ${o.productImage ? `<img src="http://localhost:3000/uploads/${o.productImage}" alt="${o.productName}">` : catEmoji(o.category)}
+              ${o.productImage ? `<img src="${o.productImage}" alt="${o.productName}">` : catEmoji(o.category)}
             </div>
             <div class="order-body">
               <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
@@ -249,7 +249,7 @@
   async function doCancel(){
     if(!cancelTarget) return;
     try{
-      await fetch(`http://localhost:3000/orders/${cancelTarget}/cancel`, {method:'PATCH'});
+      await fetch(`/orders/${cancelTarget}/cancel`, {method:'PATCH'});
       closeModal();
       fetchOrders();
     } catch{ alert('Cancel failed. Try again.'); }

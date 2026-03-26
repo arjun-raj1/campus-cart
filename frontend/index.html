@@ -494,7 +494,7 @@ function badge(i){
 
 async function loadProducts() {
   try {
-    const res = await fetch('http://localhost:3000/products');
+    const res = await fetch('/products');
     const data = await res.json();
     allProducts = Array.isArray(data) ? data : [];
     renderDeals();
@@ -516,7 +516,7 @@ function renderDeals() {
     return `
       <a class="deal-card" href="product.html?id=${p._id}">
         <div class="deal-img">
-          ${p.image ? `<img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}">` : catEmoji(p.category)}
+          ${p.image ? `<img src="${p.image}" alt="${p.name}">` : catEmoji(p.category)}
         </div>
         <div class="deal-info">
           <div class="name">${p.name}</div>
@@ -556,7 +556,7 @@ function renderProducts(list) {
       <a class="pcard" href="product.html?id=${p._id}">
         ${badge(i)}
         ${p.image
-          ? `<img class="pcard-img" src="http://localhost:3000/uploads/${p.image}" alt="${p.name}" loading="lazy">`
+          ? `<img class="pcard-img" src="${p.image}" alt="${p.name}" loading="lazy">`
           : `<div class="pcard-img-ph">${catEmoji(p.category)}</div>`
         }
         <div class="pcard-body">

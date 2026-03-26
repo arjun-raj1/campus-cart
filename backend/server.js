@@ -1,108 +1,128 @@
-const express = require("express");
-const multer  = require("multer");
-const cors    = require("cors");
-const path    = require("path");
-const fs      = require("fs");
+require('dotenv').config();
+const express = require('express');
+const multer = require('multer');
+const cors = require('cors');
+const path = require('path');
+const mongoose = require('mongoose');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static("uploads"));
-app.use(express.static(path.join(__dirname, "../frontend")));
 
-// ── JSON Stores ──────────────────────────────────────────────
-const PRODUCTS_FILE = path.join(__dirname, "db.json");
-const ORDERS_FILE   = path.join(__dirname, "orders.json");
+// Serve static frontend files (for local use)
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-function readProducts() {
-  try { return JSON.parse(fs.readFileSync(PRODUCTS_FILE, "utf8")); }
-  catch { return []; }
-}
-function writeProducts(data) {
-  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(data, null, 2));
-}
+// ── Cloudinary Config ──────────────────────────────────────────────
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
-function readOrders() {
-  try {
-    if (!fs.existsSync(ORDERS_FILE)) return [];
-    return JSON.parse(fs.readFileSync(ORDERS_FILE, "utf8"));
-  } catch { return []; }
-}
-function writeOrders(data) {
-  fs.writeFileSync(ORDERS_FILE, JSON.stringify(data, null, 2));
-}
-
-function newId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-}
-
-// ── Multer ───────────────────────────────────────────────────
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = "uploads";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'campuscart_products',
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'gif']
   }
 });
+
 const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, cb) =>
-    cb(null, /jpeg|jpg|png|webp|gif/i.test(path.extname(file.originalname)))
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 }
 });
+
+// ── MongoDB Connection ──────────────────────────────────────────────
+// Check if MONGODB_URI exists before connecting
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+} else {
+  console.warn('⚠️ No MONGODB_URI found. Database not connected.');
+}
+
+// ── Mongoose Schemas & Models ──────────────────────────────────────────────
+const productSchema = new mongoose.Schema({
+  name: { type: String, default: "" },
+  price: { type: Number, default: 0 },
+  category: { type: String, default: "" },
+  description: { type: String, default: "" },
+  seller: { type: String, default: "Anonymous" },
+  phone: { type: String, default: "" },
+  image: { type: String, default: "" }, // Cloudinary URL
+  status: { type: String, default: "available" }, // 'available' or 'sold'
+  createdAt: { type: Date, default: Date.now }
+});
+
+const orderSchema = new mongoose.Schema({
+  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+  productName: String,
+  productImage: String,
+  category: String,
+  price: Number,
+  seller: String,
+  sellerPhone: String,
+  buyerName: { type: String, default: "Anonymous" },
+  buyerPhone: { type: String, default: "" },
+  buyerEmail: { type: String, default: "" },
+  note: { type: String, default: "" },
+  status: { type: String, default: "confirmed" }, // 'confirmed', 'completed', 'cancelled'
+  orderedAt: { type: Date, default: Date.now }
+});
+
+const Product = mongoose.model('Product', productSchema);
+const Order = mongoose.model('Order', orderSchema);
 
 // ══════════════════════════════════════════════════════════════
 //  PRODUCT ROUTES
 // ══════════════════════════════════════════════════════════════
 
 // List products (optional ?category= filter)
-app.get("/products", (req, res) => {
+app.get("/products", async (req, res) => {
   try {
-    let data = readProducts();
-    if (req.query.category && req.query.category !== "All")
-      data = data.filter(p => p.category === req.query.category);
-    res.json(data);
+    let query = {};
+    if (req.query.category && req.query.category !== "All") {
+      query.category = req.query.category;
+    }
+    const products = await Product.find(query).sort({ createdAt: -1 });
+    res.json(products);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 // Single product
-app.get("/products/:id", (req, res) => {
+app.get("/products/:id", async (req, res) => {
   try {
-    const p = readProducts().find(p => p._id === req.params.id);
-    if (!p) return res.status(404).json({ message: "Not found" });
-    res.json(p);
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Not found" });
+    res.json(product);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 // Add product
-app.post("/add-product", upload.single("image"), (req, res) => {
+app.post("/add-product", upload.single("image"), async (req, res) => {
   try {
-    const products = readProducts();
-    const product  = {
-      _id:         newId(),
-      name:        req.body.name        || "",
-      price:       Number(req.body.price) || 0,
-      category:    req.body.category    || "",
+    const product = new Product({
+      name: req.body.name || "",
+      price: Number(req.body.price) || 0,
+      category: req.body.category || "",
       description: req.body.description || "",
-      seller:      req.body.seller      || "Anonymous",
-      phone:       req.body.phone       || "",
-      image:       req.file ? req.file.filename : "",
-      status:      "available",          // available | sold
-      createdAt:   new Date().toISOString()
-    };
-    products.unshift(product);
-    writeProducts(products);
-    res.json({ success: true, message: "Product listed!", id: product._id });
+      seller: req.body.seller || "Anonymous",
+      phone: req.body.phone || "",
+      image: req.file ? req.file.path : "", // req.file.path is Cloudinary URL via storage
+      status: "available"
+    });
+    const savedProduct = await product.save();
+    res.json({ success: true, message: "Product listed!", id: savedProduct._id });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 // Delete product
-app.delete("/products/:id", (req, res) => {
+app.delete("/products/:id", async (req, res) => {
   try {
-    writeProducts(readProducts().filter(p => p._id !== req.params.id));
+    await Product.findByIdAndDelete(req.params.id);
     res.json({ success: true });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -112,86 +132,91 @@ app.delete("/products/:id", (req, res) => {
 // ══════════════════════════════════════════════════════════════
 
 // Place an order (buy a product)
-app.post("/buy/:productId", (req, res) => {
+app.post("/buy/:productId", async (req, res) => {
   try {
-    const products = readProducts();
-    const idx      = products.findIndex(p => p._id === req.params.productId);
+    const product = await Product.findById(req.params.productId);
 
-    if (idx === -1)
+    if (!product)
       return res.status(404).json({ success: false, message: "Product not found." });
-    if (products[idx].status === "sold")
+    if (product.status === "sold")
       return res.status(400).json({ success: false, message: "This item has already been sold." });
 
-    // Record order
-    const orders = readOrders();
-    const order  = {
-      _id:         newId(),
-      productId:   products[idx]._id,
-      productName: products[idx].name,
-      productImage:products[idx].image,
-      category:    products[idx].category,
-      price:       products[idx].price,
-      seller:      products[idx].seller,
-      sellerPhone: products[idx].phone,
-      // buyer details from request body
-      buyerName:   req.body.buyerName   || "Anonymous",
-      buyerPhone:  req.body.buyerPhone  || "",
-      buyerEmail:  req.body.buyerEmail  || "",
-      note:        req.body.note        || "",
-      status:      "confirmed",          // confirmed | completed | cancelled
-      orderedAt:   new Date().toISOString()
-    };
-    orders.unshift(order);
-    writeOrders(orders);
+    // Create Order
+    const order = new Order({
+      productId: product._id,
+      productName: product.name,
+      productImage: product.image,
+      category: product.category,
+      price: product.price,
+      seller: product.seller,
+      sellerPhone: product.phone,
+      buyerName: req.body.buyerName || "Anonymous",
+      buyerPhone: req.body.buyerPhone || "",
+      buyerEmail: req.body.buyerEmail || "",
+      note: req.body.note || "",
+      status: "confirmed"
+    });
+    
+    await order.save();
 
     // Mark product as sold
-    products[idx].status = "sold";
-    writeProducts(products);
+    product.status = "sold";
+    await product.save();
 
     res.json({ success: true, message: "Order placed!", orderId: order._id });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
 // List all orders (optionally filter by buyer phone ?phone=)
-app.get("/orders", (req, res) => {
+app.get("/orders", async (req, res) => {
   try {
-    let orders = readOrders();
-    if (req.query.phone)
-      orders = orders.filter(o => o.buyerPhone === req.query.phone);
+    let query = {};
+    if (req.query.phone) {
+      query.buyerPhone = req.query.phone;
+    }
+    const orders = await Order.find(query).sort({ orderedAt: -1 });
     res.json(orders);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 // Single order
-app.get("/orders/:id", (req, res) => {
+app.get("/orders/:id", async (req, res) => {
   try {
-    const o = readOrders().find(o => o._id === req.params.id);
-    if (!o) return res.status(404).json({ message: "Order not found" });
-    res.json(o);
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json(order);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 // Cancel order (buyer cancels)
-app.patch("/orders/:id/cancel", (req, res) => {
+app.patch("/orders/:id/cancel", async (req, res) => {
   try {
-    const orders = readOrders();
-    const idx    = orders.findIndex(o => o._id === req.params.id);
-    if (idx === -1) return res.status(404).json({ message: "Order not found" });
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
 
-    orders[idx].status = "cancelled";
-    writeOrders(orders);
+    order.status = "cancelled";
+    await order.save();
 
     // Re-mark product as available
-    const products = readProducts();
-    const pIdx     = products.findIndex(p => p._id === orders[idx].productId);
-    if (pIdx !== -1) { products[pIdx].status = "available"; writeProducts(products); }
+    const product = await Product.findById(order.productId);
+    if (product) {
+      product.status = "available";
+      await product.save();
+    }
 
     res.json({ success: true, message: "Order cancelled." });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
 // ── Start ────────────────────────────────────────────────────
-app.listen(3000, () => {
-  console.log("✅ SwapNest running → http://localhost:3000");
-  console.log("📦 Products: db.json   |  🛒 Orders: orders.json");
-});
+// Export the Express app as a serverless function
+module.exports = app;
+
+// Only start locally if not in Vercel environment
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`✅ SwapNest (Vercel Ready) running → http://localhost:${PORT}`);
+    console.log(`📦 Database: MongoDB   |  🖼️ Uploads: Cloudinary`);
+  });
+}

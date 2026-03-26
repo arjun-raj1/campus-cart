@@ -378,7 +378,7 @@
     const img=document.getElementById('imgFile').files[0];
     if(img) fd.append('image',img);
     try{
-      const res=await fetch('http://localhost:3000/add-product',{method:'POST',body:fd});
+      const res=await fetch('/add-product',{method:'POST',body:fd});
       const d=await res.json();
       if(d.success){
         document.getElementById('sec3').classList.remove('active');

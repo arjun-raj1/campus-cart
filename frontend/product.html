@@ -343,7 +343,7 @@ async function load(){
     return;
   }
   try{
-    const res=await fetch('http://localhost:3000/products/'+id);
+    const res=await fetch('/products/'+id);
     if(!res.ok) throw new Error();
     const p=await res.json();
     render(p);
@@ -360,7 +360,7 @@ function render(p){
   const orig=Math.round(p.price*1.6);
   const disc=Math.round((1-p.price/orig)*100);
   const imgEl=p.image
-    ?`<img class="main-img" src="http://localhost:3000/uploads/${p.image}" alt="${p.name}">`
+    ?`<img class="main-img" src="${p.image}" alt="${p.name}">`
     :`<div class="img-placeholder">${catEmoji(p.category)}</div>`;
   const waMsg=encodeURIComponent(`Hi! I saw your listing "${p.name}" for ₹${p.price} on SwapNest. Is it still available?`);
   const waLink=p.phone?`https://wa.me/91${p.phone}?text=${waMsg}`:null;
@@ -420,14 +420,14 @@ function render(p){
 
 async function loadRelated(cat, ownId){
   try{
-    const res=await fetch('http://localhost:3000/products?category='+encodeURIComponent(cat));
+    const res=await fetch('/products?category='+encodeURIComponent(cat));
     const data=await res.json();
     const others=Array.isArray(data)?data.filter(p=>p._id!==ownId).slice(0,6):[];
     if(!others.length) return;
     document.getElementById('relSection').style.display='block';
     document.getElementById('relGrid').innerHTML=others.map(p=>`
       <a class="rcard" href="product.html?id=${p._id}">
-        <div class="rcard-img">${p.image?`<img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}">`:catEmoji(p.category)}</div>
+        <div class="rcard-img">${p.image?`<img src="${p.image}" alt="${p.name}">`:catEmoji(p.category)}</div>
         <div class="rcard-body">
           <div class="rcard-name">${p.name}</div>
           <div class="rcard-price">₹${Number(p.price).toLocaleString('en-IN')}</div>
@@ -439,7 +439,7 @@ async function loadRelated(cat, ownId){
 function openDelModal(i){ document.getElementById('modalBg').style.display='flex'; document.getElementById('confirmDel').onclick=()=>delProduct(i); }
 function closeDelModal(){ document.getElementById('modalBg').style.display='none'; }
 async function delProduct(i){
-  try{ await fetch('http://localhost:3000/products/'+i,{method:'DELETE'}); location.href='index.html'; }
+  try{ await fetch('/products/'+i,{method:'DELETE'}); location.href='index.html'; }
   catch{ alert('Delete failed. Try again.'); }
 }
 
@@ -455,7 +455,7 @@ async function submitBuy(){
   btn.textContent = 'Processing…'; btn.disabled = true;
 
   try {
-    const res = await fetch('http://localhost:3000/buy/'+id, {
+    const res = await fetch('/buy/'+id, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
