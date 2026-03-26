@@ -75,6 +75,9 @@ const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 //  API ROUTES
 // ══════════════════════════════════════════════════════════════
 
+// Health check
+app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date() }));
+
 app.get("/products", async (req, res) => {
   try {
     let query = {};
