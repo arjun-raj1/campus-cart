@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, "../frontend")));
 
 // ── JSON Stores ──────────────────────────────────────────────
 const PRODUCTS_FILE = path.join(__dirname, "db.json");
