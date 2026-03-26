@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sell Item — SwapNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* Dark Theme (Devialet-Style) */
+      --bg: #030303; --navy: #0a0a0a; --surface: #141414; --card: #111111;
+      --border: #2f2f2f; --accent: #ffffff; --blue: #cccccc; --cyan: #ffffff;
+      --green: #00d87f; --yellow: #ffd60a; --red: #ff3b5c;
+      --text: #ffffff; --muted: #888888; --r: 10px;
+      
+      --topbar-bg: #000000;
+      --hero-bg: radial-gradient(circle at center top, #1a1a1a 0%, #030303 100%);
+    }
+    
+    [data-theme="light"] {
+      --bg: #f4f5f8; --navy: #ffffff; --surface: #eaeef6; --card: #ffffff;
+      --border: #d1d5e0; --text: #1a1a3a; --muted: #5e667c;
+      --topbar-bg: #e2e6f0;
+      --hero-bg: linear-gradient(135deg, #f0f4fd, #dce4fa);
+    }
+
+    body { font-family: 'Inter', sans-serif; font-weight: 500; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    a { text-decoration: none; color: inherit; }
+
+    .topbar {
+      background: var(--topbar-bg); border-bottom: 1px solid var(--border);
+      padding: 6px 24px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.75rem; font-weight: 600; color: var(--muted); transition: background 0.3s;
+    }
+    nav {
+      background: var(--navy); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 200; transition: background 0.3s;
+    }
+    .logo {
+      font-size: 1.45rem; font-weight: 900; letter-spacing: 2px;
+      color: var(--text); text-transform: uppercase;
+    }
+    .logo span { font-weight: 300; opacity: 0.7; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 24px; border-radius: 30px; font-weight: 700;
+      font-size: 0.8rem; cursor: pointer; border: none; transition: all 0.3s;
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--text); color: var(--text); }
+    .btn-primary { background: var(--text); color: var(--bg); border: none; }
+    .btn-primary:hover { opacity: 0.9; box-shadow: 0 8px 24px rgba(255,255,255,0.2); transform: translateY(-1px); }
+    .theme-toggle { background: transparent; border: 1.5px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; transition: all 0.2s; }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); transform: rotate(15deg); }
+
+    /* PAGE HEADER */
+    .page-header {
+      background: var(--hero-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 36px; text-align: center;
+      position: relative; overflow: hidden; transition: background 0.3s;
+    }
+    .page-header::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 100%, rgba(255,255,255,0.05) 0%, transparent 70%);
+    }
+    .page-header h1 { font-size: 2.2rem; font-weight: 900; position: relative; z-index: 1; text-transform: uppercase; letter-spacing: 2px; }
+    .page-header h1 span { color: var(--text); font-weight: 300; }
+    .page-header p { color: var(--muted); font-size: 0.9rem; margin-top: 12px; position: relative; z-index: 1; }
+
+    /* STEPS */
+    .steps-wrap { max-width: 560px; margin: 32px auto 0; padding-inline: 24px; }
+    .steps { display: flex; align-items: center; }
+    .step { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .step-line {
+      position: absolute; top: 16px; left: 50%; width: 100%; height: 2px;
+      background: var(--border); z-index: 0;
+    }
+    .step:last-child .step-line { display: none; }
+    .step-dot {
+      width: 32px; height: 32px; border-radius: 50%; z-index: 1;
+      background: var(--surface); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; transition: all 0.3s;
+    }
+    .step.active .step-dot { background: var(--text); border-color: var(--text); color: var(--bg); box-shadow: 0 0 16px rgba(255,255,255,0.2); }
+    .step.done .step-dot { background: var(--border); border-color: var(--border); color: var(--text); }
+    .step-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+    .step.active .step-lbl { color: var(--text); }
+    .step.done .step-lbl { color: var(--muted); }
+
+    /* FORM */
+    .form-outer { max-width: 640px; margin: 28px auto; padding-inline: 24px; padding-bottom: 64px; }
+    .form-card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 32px; }
+    .form-sec { display: none; }
+    .form-sec.active { display: block; }
+
+    .frow { margin-bottom: 20px; }
+    .frow label { display: block; margin-bottom: 8px; font-size: 0.82rem; font-weight: 600; color: var(--text); }
+    .frow label .req { color: var(--red); }
+    .frow input, .frow select, .frow textarea {
+      width: 100%; padding: 12px 14px;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 9px; color: var(--text); font-size: 0.875rem;
+      font-family: 'Inter', sans-serif; outline: none; transition: border 0.3s, box-shadow 0.3s;
+    }
+    .frow input:focus, .frow select:focus, .frow textarea:focus { border-color: var(--text); box-shadow: 0 0 0 3px rgba(255,255,255,0.1); }
+    .frow select option { background: var(--surface); }
+    .frow textarea { resize: vertical; min-height: 90px; }
+    .frow input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+    .frow input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; appearance: none; }
+
+    /* UPLOAD */
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 12px;
+      padding: 40px 20px; text-align: center; cursor: pointer;
+      transition: all 0.2s; background: var(--surface);
+    }
+    .upload-zone:hover, .upload-zone.drag { border-color: var(--text); background: rgba(255,255,255,0.03); }
+    .upload-zone .up-icon { font-size: 2.8rem; margin-bottom: 10px; opacity: 0.8; }
+    .upload-zone p { color: var(--muted); font-size: 0.85rem; }
+    .upload-zone p b { color: var(--text); cursor: pointer; text-decoration: underline; }
+    #imgFile { display: none; }
+    .preview-box { position: relative; display: none; margin-top: 12px; }
+    .preview-box img { width: 100%; max-height: 230px; object-fit: cover; border-radius: 10px; }
+    .preview-box .rm {
+      position: absolute; top: 8px; right: 8px;
+      background: rgba(0,0,0,0.75); color: white; border: none;
+      border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 1rem;
+    }
+
+    /* FOOTER NAV */
+    .form-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border);
+    }
+    .btn-lg { padding: 11px 26px; font-size: 0.9rem; border-radius: 9px; font-weight: 700; }
+
+    /* ERROR */
+    .err { background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.3); color: #ff7090; border-radius: 8px; padding: 10px 14px; font-size: 0.83rem; margin-bottom: 16px; display: none; }
+
+    /* SUCCESS */
+    .success-screen { text-align: center; padding: 40px 20px; display: none; }
+    .success-screen .s-icon { font-size: 4rem; margin-bottom: 16px; }
+    .success-screen h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 8px; }
+    .success-screen p { color: var(--muted); margin-bottom: 24px; }
+    .success-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    @media (max-width: 600px) {
+      .topbar { flex-direction: column; gap: 6px; text-align: center; }
+      nav { gap: 12px; }
+      .form-card { padding: 20px; }
+      .page-header { padding: 32px 20px; }
+      .page-header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>🎓 Free for BTech Students</span>
+  <a href="index.html" style="color:var(--cyan)">← Back to Browse</a>
+</div>
+
+<nav>
+  <a href="index.html" class="logo">🔄 Swap<span>Nest</span></a>
+  <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+    <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    <a href="index.html" class="btn btn-outline">Browse Items</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>List Your <span>Workshop Item</span></h1>
+  <p>Help fellow students save money — sell your unused lab coats, kits &amp; more</p>
+</div>
+
+<div class="steps-wrap">
+  <div class="steps" id="stepsBar">
+    <div class="step active" id="st1">
+      <div class="step-line"></div>
+      <div class="step-dot">1</div>
+      <div class="step-lbl">Item Info</div>
+    </div>
+    <div class="step" id="st2">
+      <div class="step-line"></div>
+      <div class="step-dot">2</div>
+      <div class="step-lbl">Photo</div>
+    </div>
+    <div class="step" id="st3">
+      <div class="step-line"></div>
+      <div class="step-dot">3</div>
+      <div class="step-lbl">Contact</div>
+    </div>
+  </div>
+</div>
+
+<div class="form-outer">
+  <div class="form-card">
+    <div class="err" id="errMsg"></div>
+
+    <!-- STEP 1 -->
+    <div class="form-sec active" id="sec1">
+      <div class="frow">
+        <label>Product Name <span class="req">*</span></label>
+        <input id="pName" placeholder="e.g. Lab Coat Size M, Circuit Board Kit…">
+      </div>
+      <div class="frow">
+        <label>Category <span class="req">*</span></label>
+        <select id="pCat">
+          <option value="">— Select Category —</option>
+          <option>Mechanical</option>
+          <option>Electrical</option>
+          <option>Electronics</option>
+          <option>Study Materials</option>
+          <option>Safety Gear</option>
+        </select>
+      </div>
+      <div class="frow">
+        <label>Price (₹) <span class="req">*</span></label>
+        <input id="pPrice" type="number" min="0" placeholder="e.g. 250">
+      </div>
+      <div class="frow">
+        <label>Description</label>
+        <textarea id="pDesc" placeholder="Describe condition, age, included accessories…"></textarea>
+      </div>
+      <div class="form-footer">
+        <span></span>
+        <button class="btn btn-primary btn-lg" onclick="next(1)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="form-sec" id="sec2">
+      <div class="frow">
+        <label>Product Photo (optional)</label>
+        <div class="upload-zone" id="upZone"
+          onclick="document.getElementById('imgFile').click()"
+          ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')"
+          ondrop="onDrop(event)">
+          <div class="up-icon">📷</div>
+          <p>Drag &amp; drop or <b>browse</b> to choose</p>
+          <p style="margin-top:4px;font-size:0.75rem">JPG, PNG, WEBP — max 5 MB</p>
+        </div>
+        <input type="file" id="imgFile" accept="image/*" onchange="previewImg(this)">
+        <div class="preview-box" id="prevBox">
+          <img id="prevImg" src="" alt="Preview">
+          <button class="rm" onclick="clearImg()">✕</button>
+        </div>
+      </div>
+      <div class="form-footer">
+        <button class="btn btn-outline btn-lg" onclick="prev(2)">← Back</button>
+        <button class="btn btn-primary btn-lg" onclick="next(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="form-sec" id="sec3">
+      <div class="frow">
+        <label>Your Name <span class="req">*</span></label>
+        <input id="pSeller" placeholder="Your name or nickname">
+      </div>
+      <div class="frow">
+        <label>WhatsApp / Phone <span class="req">*</span></label>
+        <input id="pPhone" type="tel" placeholder="10-digit mobile number">
+      </div>
+      <div class="form-footer">
+        <button class="btn btn-outline btn-lg" onclick="prev(3)">← Back</button>
+        <button class="btn btn-primary btn-lg" id="subBtn" onclick="submit()">🚀 List Item</button>
+      </div>
+    </div>
+
+    <!-- SUCCESS -->
+    <div class="success-screen" id="successScr">
+      <div class="s-icon">✅</div>
+      <h2>Item Listed!</h2>
+      <p>Your item is now live on the marketplace for all students.</p>
+      <div class="success-btns">
+        <a href="index.html" class="btn btn-primary btn-lg">Browse Marketplace</a>
+        <a href="sell.html" class="btn btn-outline btn-lg">List Another</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // THEME SYSTEM
+  const tBtn = document.getElementById('themeToggle');
+  const storedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', storedTheme);
+  tBtn.textContent = storedTheme === 'light' ? '☀️' : '🌙';
+
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const nxt = cur === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', nxt);
+    localStorage.setItem('theme', nxt);
+    tBtn.textContent = nxt === 'light' ? '☀️' : '🌙';
+  }
+
+  let cur = 1;
+
+  function showErr(m){ const e=document.getElementById('errMsg'); e.textContent=m; e.style.display='block'; setTimeout(()=>e.style.display='none',3000); }
+
+  function validate(s){
+    if(s===1){
+      if(!document.getElementById('pName').value.trim()){showErr('Product name is required.');return false;}
+      if(!document.getElementById('pCat').value){showErr('Please select a category.');return false;}
+      const pr=document.getElementById('pPrice').value;
+      if(!pr||pr<0){showErr('Enter a valid price.');return false;}
+    }
+    if(s===3){
+      if(!document.getElementById('pSeller').value.trim()){showErr('Your name is required.');return false;}
+      if(!/^\d{10}$/.test(document.getElementById('pPhone').value.trim())){showErr('Enter valid 10-digit phone.');return false;}
+    }
+    return true;
+  }
+
+  function next(s){
+    if(!validate(s)) return;
+    document.getElementById('sec'+s).classList.remove('active');
+    cur=s+1;
+    document.getElementById('sec'+cur).classList.add('active');
+    updateSteps();
+  }
+  function prev(s){
+    document.getElementById('sec'+s).classList.remove('active');
+    cur=s-1;
+    document.getElementById('sec'+cur).classList.add('active');
+    updateSteps();
+  }
+  function updateSteps(){
+    for(let i=1;i<=3;i++){
+      const el=document.getElementById('st'+i);
+      el.classList.remove('active','done');
+      if(i<cur) el.classList.add('done');
+      if(i===cur) el.classList.add('active');
+    }
+  }
+
+  function previewImg(inp){
+    if(!inp.files[0]) return;
+    const fr=new FileReader();
+    fr.onload=e=>{
+      document.getElementById('prevImg').src=e.target.result;
+      document.getElementById('prevBox').style.display='block';
+      document.getElementById('upZone').style.display='none';
+    };
+    fr.readAsDataURL(inp.files[0]);
+  }
+  function onDrop(e){
+    e.preventDefault();
+    document.getElementById('upZone').classList.remove('drag');
+    const f=e.dataTransfer.files[0];
+    if(f){ const dt=new DataTransfer(); dt.items.add(f); document.getElementById('imgFile').files=dt.files; previewImg(document.getElementById('imgFile')); }
+  }
+  function clearImg(){
+    document.getElementById('imgFile').value='';
+    document.getElementById('prevBox').style.display='none';
+    document.getElementById('upZone').style.display='block';
+  }
+
+  async function submit(){
+    if(!validate(3)) return;
+    const btn=document.getElementById('subBtn');
+    btn.textContent='Uploading…'; btn.disabled=true;
+    const fd=new FormData();
+    fd.append('name',document.getElementById('pName').value.trim());
+    fd.append('price',document.getElementById('pPrice').value);
+    fd.append('category',document.getElementById('pCat').value);
+    fd.append('description',document.getElementById('pDesc').value.trim());
+    fd.append('seller',document.getElementById('pSeller').value.trim());
+    fd.append('phone',document.getElementById('pPhone').value.trim());
+    const img=document.getElementById('imgFile').files[0];
+    if(img) fd.append('image',img);
+    try{
+      const res=await fetch('http://localhost:3000/add-product',{method:'POST',body:fd});
+      const d=await res.json();
+      if(d.success){
+        document.getElementById('sec3').classList.remove('active');
+        document.getElementById('stepsBar').style.display='none';
+        document.getElementById('successScr').style.display='block';
+      } else { showErr(d.message||'Upload failed.'); btn.textContent='🚀 List Item'; btn.disabled=false; }
+    } catch{ showErr('Cannot reach server. Is the backend running?'); btn.textContent='🚀 List Item'; btn.disabled=false; }
+  }
+</script>
+</body>
+</html>

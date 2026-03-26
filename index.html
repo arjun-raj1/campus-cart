@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwapNest — BTech Student Marketplace</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Dark Theme (Devialet-Style) */
+      --bg:      #030303;
+      --navy:    #0a0a0a;
+      --surface: #141414;
+      --card:    #111111;
+      --border:  #2f2f2f;
+      --accent:  #ffffff;
+      --accent2: #dddddd;
+      --blue:    #cccccc;
+      --cyan:    #ffffff;
+      --green:   #00d87f;
+      --yellow:  #ffd60a;
+      --red:     #ff3b5c;
+      --text:    #ffffff;
+      --muted:   #888888;
+      --r:       10px;
+      
+      --topbar-bg: #000000;
+      --hero-bg: radial-gradient(circle at center top, #1a1a1a 0%, #030303 100%);
+      --strip-bg: var(--navy);
+      --strip-border: var(--border);
+      --input-bg: transparent;
+      --shadow: 0 12px 36px rgba(255,255,255,0.05);
+    }
+
+    [data-theme="light"] {
+      --bg:      #f4f5f8;
+      --navy:    #ffffff;
+      --surface: #eaeef6;
+      --card:    #ffffff;
+      --border:  #d1d5e0;
+      --text:    #1a1a3a;
+      --muted:   #5e667c;
+      
+      --topbar-bg: #e2e6f0;
+      --hero-bg: linear-gradient(135deg, #f0f4fd 0%, #e8edff 40%, #dce4fa 100%);
+      --strip-bg: #ffffff;
+      --strip-border: #d1d5e0;
+      --input-bg: #f8fafc;
+      --shadow: 0 12px 36px rgba(91,94,244,0.12);
+    }
+
+    body { font-family: 'Inter', sans-serif; font-weight: 500; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ── TOP BAR ─────────────────────────────── */
+    .topbar {
+      background: var(--topbar-bg);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.75rem; font-weight: 600; color: var(--muted);
+      transition: background 0.3s;
+    }
+    .topbar a { color: var(--muted); }
+    .topbar a:hover { color: var(--cyan); }
+
+    /* ── NAVBAR ──────────────────────────────── */
+    nav {
+      background: var(--navy);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+      position: sticky; top: 0; z-index: 200;
+      transition: background 0.3s;
+    }
+    .logo {
+      font-size: 1.45rem; font-weight: 900; letter-spacing: 2px; white-space: nowrap;
+      color: var(--text); text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .logo span { font-weight: 300; opacity: 0.7; }
+
+    .search-bar {
+      flex: 1; display: flex; max-width: 500px;
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 10px; overflow: hidden; transition: all 0.3s;
+    }
+    .search-bar:focus-within { border-color: var(--green); box-shadow: 0 0 12px rgba(0, 216, 127, 0.2); }
+    .search-bar input {
+      flex: 1; padding: 10px 16px;
+      background: var(--input-bg); border: none; outline: none;
+      color: var(--text); font-size: 0.9rem; font-family: 'Inter', sans-serif;
+    }
+    .search-bar button {
+      background: var(--green);
+      border: none; padding: 0 20px; cursor: pointer; color: #000; font-weight: 800; font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+    .search-bar button:hover { background: #00b96b; }
+
+    .nav-actions { display: flex; gap: 12px; align-items: center; margin-left: auto; flex-shrink: 0; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 24px; border-radius: 30px; font-weight: 700;
+      font-size: 0.8rem; cursor: pointer; border: none; transition: all 0.3s;
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+    .btn-primary { background: var(--text); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,0.2); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--text); color: var(--text); }
+    
+    .theme-toggle {
+      background: var(--surface); border: 1.5px solid var(--border);
+      color: var(--text); width: 38px; height: 38px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 1.1rem; transition: all 0.2s;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); transform: rotate(15deg); }
+
+    /* ── CATEGORIES BAR ──────────────────────── */
+    .cat-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex; align-items: center; gap: 8px; overflow-x: auto;
+    }
+    .cat-bar::-webkit-scrollbar { display: none; }
+    .cat-link {
+      padding: 14px 18px; font-size: 0.82rem; font-weight: 600; color: var(--muted);
+      border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer;
+      transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .cat-link:hover, .cat-link.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+    /* ── HERO ────────────────────────────────── */
+    .hero {
+      background: var(--hero-bg);
+      padding: 80px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 24px; position: relative; overflow: hidden; min-height: 260px;
+      transition: background 0.3s;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(255,255,255,0.05) 0%, transparent 60%);
+    }
+    [data-theme="light"] .hero::before {
+      background: radial-gradient(ellipse at 70% 50%, rgba(0,0,0,0.05) 0%, transparent 60%);
+    }
+    .hero-content { position: relative; z-index: 1; max-width: 450px; }
+    .hero-badge {
+      display: inline-block; background: var(--yellow); color: #000;
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+      padding: 4px 12px; border-radius: 4px; margin-bottom: 14px;
+    }
+    .hero h1 { font-size: clamp(2.2rem, 5vw, 4rem); font-weight: 900; line-height: 1.1; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 2px; }
+    .hero h1 .hl { color: var(--text); font-weight: 300; }
+    [data-theme="light"] .hero h1 .hl { color: var(--text); }
+    .hero p { color: var(--muted); font-size: 0.95rem; margin-bottom: 24px; }
+    .hero-price { font-size: 1.4rem; font-weight: 800; color: var(--green); margin-bottom: 20px; }
+    .hero-price del { font-size: 1rem; color: var(--muted); font-weight: 400; margin-left: 8px; }
+    .hero-img {
+      flex-shrink: 0; max-width: 380px; width: 45%;
+      position: relative; z-index: 1;
+      filter: drop-shadow(0 0 40px rgba(0,0,0,0.8)) grayscale(100%);
+    }
+    [data-theme="light"] .hero-img { filter: drop-shadow(0 0 40px rgba(0,0,0,0.2)) grayscale(100%); }
+    .hero-img img { width: 100%; }
+    .hero-glow {
+      position: absolute; right: 15%; top: 50%; transform: translateY(-50%);
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    [data-theme="light"] .hero-glow { background: radial-gradient(circle, rgba(0,0,0,0.05) 0%, transparent 70%); }
+
+    /* ── FEATURES STRIP ──────────────────────── */
+    .features-strip {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      background: var(--strip-bg); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+      transition: background 0.3s;
+    }
+    .feature {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; border-right: 1px solid var(--border); font-size: 0.8rem;
+    }
+    .feature:last-child { border-right: none; }
+    .feature .icon { font-size: 1.4rem; flex-shrink: 0; }
+    .feature strong { display: block; font-weight: 700; color: var(--text); font-size: 0.82rem; }
+    .feature span { color: var(--muted); font-size: 0.72rem; }
+
+    /* ── SECTION ─────────────────────────────── */
+    .section { padding: 36px 24px; }
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 22px;
+    }
+    .section-title {
+      font-size: 1.15rem; font-weight: 800;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::before {
+      content: ''; width: 4px; height: 22px; border-radius: 4px;
+      background: linear-gradient(180deg, var(--accent), var(--cyan));
+    }
+    .see-all { font-size: 0.8rem; color: var(--accent); cursor: pointer; }
+    .see-all:hover { text-decoration: underline; }
+
+    /* ── PRODUCT GRID ────────────────────────── */
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    /* ── PRODUCT CARD ────────────────────────── */
+    .pcard {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0px;
+      overflow: hidden; cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+      display: flex; flex-direction: column;
+      position: relative;
+    }
+    .pcard:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 25px rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.6);
+    }
+    .pcard-badge {
+      position: absolute; top: 8px; left: 8px; z-index: 2;
+      padding: 3px 9px; border-radius: 4px; font-size: 0.66rem;
+      font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+    .badge-new { background: var(--accent); color: white; }
+    .badge-hot { background: var(--red); color: white; }
+    .badge-sale { background: var(--yellow); color: #000; }
+
+    .pcard-img {
+      width: 100%; aspect-ratio: 1;
+      object-fit: cover; background: #12121f;
+    }
+    .pcard-img-ph {
+      width: 100%; aspect-ratio: 1;
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3.5rem;
+    }
+    .pcard-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+    .pcard-cat { font-size: 0.72rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .pcard-name { font-weight: 700; font-size: 0.9rem; line-height: 1.4; }
+    .pcard-stars { display: flex; gap: 1px; }
+    .star { color: var(--yellow); font-size: 0.8rem; }
+    .pcard-price { font-size: 1.15rem; font-weight: 900; color: var(--text); margin-top: auto; }
+    .pcard-price .orig { font-size: 0.8rem; font-weight: 500; color: var(--muted); text-decoration: line-through; margin-left: 5px; }
+    .pcard-btn {
+      width: calc(100% - 28px); margin: 0 14px 14px;
+      background: transparent;
+      border: 1px solid var(--text); border-radius: 30px; color: var(--text);
+      padding: 10px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      cursor: pointer; transition: all 0.3s;
+    }
+    .pcard-btn:hover { background: var(--text); color: var(--bg); }
+
+    /* ── DEALS OF THE DAY ────────────────────── */
+    .deal-section { background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .deal-section .section-header { padding: 20px 24px 0; }
+    .deal-timer {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.8rem; color: var(--muted);
+    }
+    .time-block {
+      background: var(--accent); color: white;
+      border-radius: 6px; padding: 4px 8px;
+      font-size: 0.85rem; font-weight: 700; min-width: 32px; text-align: center;
+    }
+    .deal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; padding: 16px 24px 24px; }
+    .deal-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px;
+      display: flex; gap: 14px; align-items: center;
+      transition: border-color 0.2s;
+    }
+    .deal-card:hover { border-color: var(--accent); }
+    .deal-img {
+      width: 90px; height: 90px; flex-shrink: 0;
+      border-radius: 8px; object-fit: cover; background: var(--surface);
+      display: flex; align-items: center; justify-content: center; font-size: 2.5rem;
+    }
+    .deal-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .deal-info { flex: 1; min-width: 0; }
+    .deal-info .name { font-weight: 600; font-size: 0.85rem; margin-bottom: 4px; }
+    .deal-info .price { font-size: 1.1rem; font-weight: 800; color: var(--green); }
+    .deal-info .orig { font-size: 0.75rem; color: var(--muted); text-decoration: line-through; }
+    .deal-progress { height: 4px; background: var(--border); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+    .deal-progress-bar { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .deal-sold { font-size: 0.7rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── SEARCH CONTROLS ─────────────────────── */
+    .browse-bar {
+      padding: 20px 24px 0;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .filter-pill {
+      padding: 6px 16px; border-radius: 50px;
+      background: var(--surface); border: 1.5px solid var(--border);
+      color: var(--muted); font-size: 0.78rem; font-weight: 500;
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+    }
+    .filter-pill.active, .filter-pill:hover { background: var(--accent); border-color: var(--accent); color: white; }
+    .search-inline {
+      flex: 1; min-width: 180px;
+      background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 8px; padding: 7px 14px;
+      color: var(--text); font-size: 0.85rem; outline: none;
+      font-family: 'Inter', sans-serif; transition: border 0.2s;
+    }
+    .search-inline:focus { border-color: var(--accent); }
+
+    /* ── COUNT LABEL ─────────────────────────── */
+    .count-label { padding: 12px 24px; font-size: 0.8rem; color: var(--muted); }
+
+    /* ── EMPTY / LOADER ──────────────────────── */
+    .empty-state {
+      grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--muted);
+    }
+    .empty-state .em { font-size: 3rem; margin-bottom: 10px; }
+    .loader-grid { grid-column: 1/-1; display: flex; justify-content: center; padding: 60px; }
+    .loader-grid::after {
+      content: ''; width: 36px; height: 36px; border-radius: 50%;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── FOOTER ──────────────────────────────── */
+    footer {
+      background: var(--navy); border-top: 1px solid var(--border);
+      padding: 32px 24px; text-align: center;
+      color: var(--muted); font-size: 0.8rem; margin-top: 24px;
+    }
+    footer strong { color: var(--text); }
+
+    @media (max-width: 768px) {
+      .topbar { flex-direction: column; gap: 6px; text-align: center; }
+      .features-strip { grid-template-columns: repeat(2, 1fr); }
+      .feature:nth-child(2) { border-right: none; }
+      .feature:nth-child(5) { display: none; }
+      .hero { flex-direction: column; text-align: center; padding: 40px 20px; }
+      .hero-img { width: 80%; max-width: 250px; }
+      .hero-glow { display: none; }
+      nav { gap: 12px; }
+      .search-bar { order: 3; flex-basis: 100%; max-width: 100%; }
+      .hero h1 { font-size: 2.2rem; }
+      .product-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <span>🎓 Free for BTech Students &nbsp;|&nbsp; <a href="#">Register Now</a></span>
+  <span>📞 Support &nbsp;|&nbsp; <a href="sell.html">Sell</a> &nbsp;|&nbsp; <a href="#">FAQs</a></span>
+</div>
+
+<!-- NAVBAR -->
+<nav>
+  <a href="index.html" class="logo">🔄 Swap<span>Nest</span></a>
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Search lab coats, safety boots, circuit kits…" oninput="filterProducts()">
+    <button>Search</button>
+  </div>
+  <div class="nav-actions">
+    <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    <a href="sell.html" class="btn btn-primary">+ List Item</a>
+  </div>
+</nav>
+
+<!-- CATEGORIES BAR -->
+<div class="cat-bar" id="catBar">
+  <div class="cat-link active" data-cat="All" onclick="setCategory(this)">🏠 All Items</div>
+  <div class="cat-link" data-cat="Mechanical" onclick="setCategory(this)">⚙️ Mechanical</div>
+  <div class="cat-link" data-cat="Electrical" onclick="setCategory(this)">⚡ Electrical</div>
+  <div class="cat-link" data-cat="Electronics" onclick="setCategory(this)">🔌 Electronics</div>
+  <div class="cat-link" data-cat="Study Materials" onclick="setCategory(this)">📚 Study Materials</div>
+  <div class="cat-link" data-cat="Safety Gear" onclick="setCategory(this)">🦺 Safety Gear</div>
+</div>
+
+<!-- HERO BANNER -->
+<div class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">🎓 Student Marketplace</div>
+    <h1>Buy & Sell<br><span class="hl">Workshop Essentials</span><br>for Less</h1>
+    <p>Senior students selling unused lab coats, safety boots & more — at unbeatable prices.</p>
+    <div class="hero-price">Starting at ₹99 <del>₹500+</del></div>
+    <a href="sell.html" class="btn btn-primary" style="font-size:0.95rem;padding:12px 26px">List Your Item →</a>
+  </div>
+  <div class="hero-glow"></div>
+  <div class="hero-img">
+    <div style="font-size:9rem;text-align:center;filter:drop-shadow(0 0 30px rgba(0,194,255,0.5))">🥼</div>
+  </div>
+</div>
+
+<!-- FEATURES STRIP -->
+<div class="features-strip">
+  <div class="feature"><div class="icon">🎓</div><div><strong>Student Only</strong><span>Verified campus listings</span></div></div>
+  <div class="feature"><div class="icon">💬</div><div><strong>WhatsApp Contact</strong><span>Direct seller chat</span></div></div>
+  <div class="feature"><div class="icon">🔒</div><div><strong>Safe Exchange</strong><span>Meet on campus</span></div></div>
+  <div class="feature"><div class="icon">💰</div><div><strong>Best Prices</strong><span>Up to 80% off retail</span></div></div>
+  <div class="feature"><div class="icon">♻️</div><div><strong>Eco Friendly</strong><span>Reduce &amp; Reuse</span></div></div>
+</div>
+
+<!-- DEALS OF THE DAY -->
+<div class="deal-section" id="dealSection" style="display:none">
+  <div class="section-header">
+    <div class="section-title">🔥 Deals of the Day</div>
+    <div class="deal-timer">
+      Ends in:
+      <div class="time-block" id="dH">00</div>:
+      <div class="time-block" id="dM">00</div>:
+      <div class="time-block" id="dS">00</div>
+    </div>
+  </div>
+  <div class="deal-grid" id="dealGrid"></div>
+</div>
+
+<!-- MAIN LISTINGS -->
+<div class="browse-bar">
+  <div class="section-title" style="flex:none;">📦 All Listings</div>
+</div>
+<div class="count-label" id="countLabel">Loading…</div>
+<div class="section" style="padding-top:0">
+  <div class="product-grid" id="productGrid">
+    <div class="loader-grid"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <strong>🔄 SwapNest</strong><br>
+  The BTech Student Marketplace · Reduce · Reuse · Save Money
+</footer>
+
+<script>
+// ── THEME ────────────────────────────────────
+const tBtn = document.getElementById('themeToggle');
+const storedTheme = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', storedTheme);
+tBtn.textContent = storedTheme === 'light' ? '☀️' : '🌙';
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const nxt = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', nxt);
+  localStorage.setItem('theme', nxt);
+  tBtn.textContent = nxt === 'light' ? '☀️' : '🌙';
+}
+
+let allProducts = [];
+let activeCategory = 'All';
+
+// ── Countdown ────────────────────────────────
+(function countdown() {
+  const end = new Date(); end.setHours(23,59,59,0);
+  function tick() {
+    const diff = end - Date.now();
+    if (diff <= 0) { end.setDate(end.getDate()+1); }
+    const h = String(Math.floor(diff/3600000)).padStart(2,'0');
+    const m = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
+    const s = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
+    document.getElementById('dH').textContent = h;
+    document.getElementById('dM').textContent = m;
+    document.getElementById('dS').textContent = s;
+  }
+  tick(); setInterval(tick, 1000);
+})();
+
+function catEmoji(c){ return {Mechanical:'⚙️',Electrical:'⚡',Electronics:'🔌','Study Materials':'📚','Safety Gear':'🦺'}[c]||'📦'; }
+
+function stars(n=5){ return '★'.repeat(n)+'☆'.repeat(5-n); }
+
+function badge(i){
+  const b = ['badge-new','badge-hot','badge-sale','badge-new','badge-hot'];
+  const t = ['NEW','HOT','SALE','NEW','HOT'];
+  if(i%4===0) return `<div class="pcard-badge ${b[i%5]}">${t[i%5]}</div>`;
+  return '';
+}
+
+async function loadProducts() {
+  try {
+    const res = await fetch('http://localhost:3000/products');
+    const data = await res.json();
+    allProducts = Array.isArray(data) ? data : [];
+    renderDeals();
+    filterProducts();
+  } catch {
+    allProducts = [];
+    document.getElementById('productGrid').innerHTML = `<div class="empty-state"><div class="em">⚠️</div><p>Server offline — make sure MongoDB &amp; Node.js are running.</p></div>`;
+    document.getElementById('countLabel').textContent = 'Server offline';
+  }
+}
+
+function renderDeals() {
+  if (allProducts.length < 2) return;
+  const deals = allProducts.slice(0, 4);
+  document.getElementById('dealSection').style.display = 'block';
+  document.getElementById('dealGrid').innerHTML = deals.map(p => {
+    const orig = Math.round(p.price * 1.6);
+    const sold = Math.floor(Math.random()*60)+20;
+    return `
+      <a class="deal-card" href="product.html?id=${p._id}">
+        <div class="deal-img">
+          ${p.image ? `<img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}">` : catEmoji(p.category)}
+        </div>
+        <div class="deal-info">
+          <div class="name">${p.name}</div>
+          <div class="price">₹${Number(p.price).toLocaleString('en-IN')}</div>
+          <div class="orig">₹${orig.toLocaleString('en-IN')}</div>
+          <div class="deal-progress"><div class="deal-progress-bar" style="width:${sold}%"></div></div>
+          <div class="deal-sold">${sold}% sold</div>
+        </div>
+      </a>`;
+  }).join('');
+}
+
+function setCategory(el) {
+  document.querySelectorAll('.cat-link').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  activeCategory = el.dataset.cat;
+  filterProducts();
+}
+
+function filterProducts() {
+  const q = (document.getElementById('searchInput').value || '').toLowerCase();
+  let filtered = allProducts;
+  if (activeCategory !== 'All') filtered = filtered.filter(p => p.category === activeCategory);
+  if (q) filtered = filtered.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+  renderProducts(filtered);
+}
+
+function renderProducts(list) {
+  document.getElementById('countLabel').textContent = `${list.length} listing${list.length!==1?'s':''} found`;
+  if (!list.length) {
+    document.getElementById('productGrid').innerHTML = `<div class="empty-state"><div class="em">📦</div><p>No listings found. Be the first to sell!</p></div>`;
+    return;
+  }
+  document.getElementById('productGrid').innerHTML = list.map((p, i) => {
+    const orig = Math.round(p.price * 1.5);
+    return `
+      <a class="pcard" href="product.html?id=${p._id}">
+        ${badge(i)}
+        ${p.image
+          ? `<img class="pcard-img" src="http://localhost:3000/uploads/${p.image}" alt="${p.name}" loading="lazy">`
+          : `<div class="pcard-img-ph">${catEmoji(p.category)}</div>`
+        }
+        <div class="pcard-body">
+          <div class="pcard-cat">${p.category}</div>
+          <div class="pcard-name">${p.name}</div>
+          <div class="pcard-stars"><span class="star">★★★★☆</span></div>
+          <div class="pcard-price">₹${Number(p.price).toLocaleString('en-IN')} <span class="orig">₹${orig.toLocaleString('en-IN')}</span></div>
+        </div>
+        <button class="pcard-btn">View Details</button>
+      </a>`;
+  }).join('');
+}
+
+loadProducts();
+</script>
+</body>
+</html>

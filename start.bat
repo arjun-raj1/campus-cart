@@ -1,0 +1,6 @@
+@echo off
+echo Installing dependencies...
+cmd /c npm install
+echo Starting server...
+cmd /c node server.js
+pause

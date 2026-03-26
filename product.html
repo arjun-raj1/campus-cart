@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — SwapNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* Dark Theme (Devialet-Style) */
+      --bg: #030303; --navy: #0a0a0a; --surface: #141414; --card: #111111;
+      --border: #2f2f2f; --accent: #ffffff; --blue: #cccccc; --cyan: #ffffff;
+      --green: #00d87f; --yellow: #ffd60a; --red: #ff3b5c;
+      --text: #ffffff; --muted: #888888; --r: 10px;
+      
+      --topbar-bg: #000000;
+      --input-bg: transparent;
+    }
+    
+    [data-theme="light"] {
+      --bg: #f4f5f8; --navy: #ffffff; --surface: #eaeef6; --card: #ffffff;
+      --border: #d1d5e0; --text: #1a1a3a; --muted: #5e667c;
+      --topbar-bg: #e2e6f0;
+      --input-bg: #f8fafc;
+    }
+
+    body { font-family: 'Inter', sans-serif; font-weight: 500; background: var(--bg); color: var(--text); min-height: 100vh; transition: background 0.3s, color 0.3s; }
+    a { text-decoration: none; color: inherit; }
+
+    .topbar {
+      background: var(--topbar-bg); border-bottom: 1px solid var(--border);
+      padding: 6px 24px; font-size: 0.75rem; font-weight: 600; color: var(--muted);
+      display: flex; justify-content: space-between; transition: background 0.3s;
+    }
+    nav {
+      background: var(--navy); border-bottom: 1px solid var(--border);
+      padding: 14px 24px; display: flex; align-items: center; gap: 16px;
+      position: sticky; top: 0; z-index: 200; transition: background 0.3s;
+    }
+    .logo {
+      font-size: 1.45rem; font-weight: 900; letter-spacing: 2px; white-space: nowrap;
+      color: var(--text); text-transform: uppercase;
+      flex-shrink: 0;
+    }
+    .logo span { font-weight: 300; opacity: 0.7; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 24px; border-radius: 30px; font-weight: 700;
+      font-size: 0.8rem; cursor: pointer; border: none; transition: all 0.3s;
+      text-transform: uppercase; letter-spacing: 1.5px;
+    }
+    .btn-primary { background: var(--text); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,0.2); }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-outline:hover { border-color: var(--text); color: var(--text); }
+    .theme-toggle { background: transparent; border: 1.5px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; transition: all 0.2s; }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); transform: rotate(15deg); }
+
+    /* BREADCRUMB */
+    .breadcrumb {
+      max-width: 1080px; margin: 0 auto;
+      padding: 16px 24px; font-size: 0.78rem; color: var(--muted);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .breadcrumb a { color: var(--accent); }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    /* PRODUCT LAYOUT */
+    .product-page {
+      max-width: 1080px; margin: 0 auto;
+      padding: 0 24px 64px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    }
+
+    /* IMAGE PANEL */
+    .main-img {
+      width: 100%; border-radius: 14px; aspect-ratio: 1;
+      object-fit: cover; background: var(--surface);
+      border: 1px solid var(--border);
+    }
+    .img-placeholder {
+      width: 100%; aspect-ratio: 1; border-radius: 14px;
+      background: linear-gradient(135deg, #12122a, #1a1a40);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 7rem; border: 1px solid var(--border);
+    }
+    /* THUMBNAILS (cosmetic) */
+    .img-thumbs { display: flex; gap: 8px; margin-top: 12px; }
+    .thumb {
+      width: 60px; height: 60px; border-radius: 8px;
+      background: var(--surface); border: 2px solid var(--border);
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; cursor: pointer; transition: border 0.2s;
+    }
+    .thumb.active, .thumb:hover { border-color: var(--accent); }
+
+    /* DETAIL PANEL */
+    .detail { display: flex; flex-direction: column; gap: 16px; }
+
+    .product-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(91,94,244,0.15); color: #9aa5fc;
+      padding: 4px 14px; border-radius: 4px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+      width: fit-content; border: 1px solid rgba(91,94,244,0.25);
+    }
+    .product-title { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 900; line-height: 1.2; }
+
+    /* PRICE BLOCK */
+    .price-block {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+    }
+    .price-main { font-size: 2.2rem; font-weight: 900; color: var(--green); line-height: 1; }
+    .price-orig { font-size: 0.9rem; color: var(--muted); text-decoration: line-through; margin-top: 4px; }
+    .price-discount {
+      display: inline-block; background: var(--red); color: white;
+      font-size: 0.72rem; font-weight: 800; padding: 3px 9px; border-radius: 4px; margin-top: 6px;
+    }
+
+    /* STARS */
+    .stars { display: flex; align-items: center; gap: 4px; }
+    .star { color: var(--yellow); font-size: 1rem; }
+    .star-count { font-size: 0.8rem; color: var(--muted); }
+
+    /* DIVIDER */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    /* INFO LIST */
+    .info-list { display: flex; flex-direction: column; gap: 10px; }
+    .info-row {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.85rem;
+    }
+    .info-row .lbl { color: var(--muted); min-width: 90px; }
+    .info-row .val { font-weight: 600; color: var(--text); }
+
+    /* DESC */
+    .desc-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+    .desc-box h4 { font-size: 0.78rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .desc-box p { font-size: 0.875rem; line-height: 1.7; color: var(--text); }
+
+    /* SELLER */
+    .seller-box {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .seller-av {
+      width: 46px; height: 46px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; font-weight: 800; flex-shrink: 0;
+    }
+    .seller-info .name { font-weight: 700; font-size: 0.9rem; }
+    .seller-info .sub { font-size: 0.75rem; color: var(--muted); margin-top: 2px; }
+
+    /* ACTIONS */
+    .actions { display: flex; flex-direction: column; gap: 10px; }
+    .wa-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: #25d366; color: white; padding: 14px;
+      border-radius: 10px; font-weight: 800; font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .wa-btn:hover { background: #1eb955; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,0.35); }
+    .del-btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.3);
+      color: #ff6680; padding: 11px; border-radius: 10px;
+      font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;
+    }
+    .del-btn:hover { background: rgba(255,59,92,0.2); }
+
+    /* META */
+    .meta-row { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.75rem; color: var(--muted); }
+
+    /* LOADING / ERROR */
+    .state-wrap {
+      grid-column: 1/-1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 100px 20px; gap: 16px; text-align: center;
+    }
+    .spinner::after {
+      content: ''; display: block; width: 40px; height: 40px; border-radius: 50%;
+      border: 3px solid var(--border); border-top-color: var(--accent);
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* BUY NOW MODAL */
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); display: none; align-items: center; justify-content: center; z-index: 300; padding: 20px; }
+    .buy-modal {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 20px; max-width: 460px; width: 100%;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5); overflow: hidden;
+      display: flex; flex-direction: column; transform: scale(0.95); opacity: 0;
+      animation: modalIn 0.3s forwards cubic-bezier(0.1, 0, 0.1, 1);
+    }
+    @keyframes modalIn { to { transform: scale(1); opacity: 1; } }
+    .bm-head {
+      background: var(--navy);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 32px; color: var(--text); position: relative;
+    }
+    .bm-head h3 { font-size: 1.45rem; font-weight: 900; margin-bottom: 4px; letter-spacing: -0.5px; }
+    .bm-head p { font-size: 0.85rem; font-weight: 500; opacity: 0.9; }
+    .bm-body { padding: 32px; background: var(--card); }
+    .b-row { margin-bottom: 18px; text-align: left; }
+    .b-row label { display: block; font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+    .b-row input, .b-row textarea {
+      width: 100%; padding: 12px 14px; background: var(--surface);
+      border: 1.5px solid var(--border); border-radius: 10px; color: var(--text);
+      font-size: 0.9rem; font-family: 'Inter', sans-serif; font-weight: 500;
+      transition: all 0.2s;
+    }
+    .b-row input:focus, .b-row textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,94,244,0.15); outline: none; }
+    .modal-btns { display: flex; gap: 12px; margin-top: 28px; }
+    .modal-btns .btn { flex: 1; padding: 14px; font-size: 0.95rem; justify-content: center; border-radius: 10px; }
+    .btn-confirm { background: var(--green); color: #000; border: none; }
+    .btn-confirm:hover { background: #00e085; box-shadow: 0 8px 24px rgba(0,216,127,0.3); transform: translateY(-1px); }
+    .sold-out {
+      background: rgba(255,59,92,0.1); border: 1px solid rgba(255,59,92,0.3);
+      color: #ff7090; padding: 14px; border-radius: 10px; text-align: center;
+      font-weight: 800; font-size: 1.1rem; letter-spacing: 1px; width: 100%;
+    }
+
+    /* RELATED */
+    .related-section { max-width: 1080px; margin: 0 auto; padding: 0 24px 48px; }
+    .section-title { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+    .section-title::before { content: ''; width: 4px; height: 20px; border-radius: 4px; background: linear-gradient(180deg, var(--accent), var(--cyan)); }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+    .rcard {
+      background: var(--card); border: 1px solid var(--border); border-radius: 0px;
+      overflow: hidden; transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    }
+    .rcard:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0 0 20px rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.6); 
+    }
+    .rcard-img { width: 100%; aspect-ratio: 1; object-fit: cover; background: var(--surface); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+    .rcard-img img { width: 100%; height: 100%; object-fit: cover; }
+    .rcard-body { padding: 10px; }
+    .rcard-name { font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; }
+    .rcard-price { font-size: 0.9rem; font-weight: 800; color: var(--green); }
+
+    @media (max-width: 680px) {
+      .product-page { grid-template-columns: 1fr; gap: 20px; }
+      .img-thumbs { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>🎓 BTech Student Marketplace</span>
+  <a href="index.html" style="color:var(--cyan)">← Home</a>
+</div>
+
+<nav>
+  <a href="index.html" class="logo">🔄 Swap<span>Nest</span></a>
+  <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+    <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    <a href="orders.html" class="btn btn-outline" style="border-color:transparent">📦 My Orders</a>
+    <a href="index.html" class="btn btn-outline">Browse</a>
+    <a href="sell.html" class="btn btn-primary">+ Sell Item</a>
+  </div>
+</nav>
+
+<div class="breadcrumb">
+  <a href="index.html">Home</a>
+  <span>›</span>
+  <span id="bCat">…</span>
+  <span>›</span>
+  <span id="bName" style="color:var(--text)">Product</span>
+</div>
+
+<div class="product-page" id="productPage">
+  <div class="state-wrap"><div class="spinner"></div><span style="color:var(--muted);font-size:0.85rem">Loading…</span></div>
+</div>
+
+<!-- RELATED -->
+<div class="related-section" id="relSection" style="display:none">
+  <div class="section-title">You May Also Like</div>
+  <div class="related-grid" id="relGrid"></div>
+</div>
+
+<!-- BUY MODAL -->
+<div class="modal-bg" id="buyModalBg">
+  <div class="buy-modal">
+    <div class="bm-head">
+      <h3 id="buyTitle">Confirm Purchase</h3>
+      <p>Secure your deal directly with the seller.</p>
+    </div>
+    <div class="bm-body">
+      <div class="b-row">
+        <label>Your Name *</label>
+        <input id="buyerName" placeholder="e.g. Rahul Kumar">
+      </div>
+      <div class="b-row">
+        <label>Phone Number *</label>
+        <input id="bPhone" type="tel" maxlength="10" placeholder="10-digit mobile number">
+      </div>
+      <div class="b-row">
+        <label>Email (Optional)</label>
+        <input id="bEmail" type="email" placeholder="For order receipt">
+      </div>
+      <div class="b-row">
+        <label>Note to Seller (Optional)</label>
+        <textarea id="bNote" rows="2" placeholder="e.g. When can we meet on campus?"></textarea>
+      </div>
+      <div class="modal-btns">
+        <button class="btn btn-outline" onclick="closeBuyModal()">Cancel</button>
+        <button class="btn btn-confirm" id="confirmBuyBtn" onclick="submitBuy()">Confirm Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// THEME SYSTEM
+const tBtn = document.getElementById('themeToggle');
+const storedTheme = localStorage.getItem('theme') || 'dark';
+document.documentElement.setAttribute('data-theme', storedTheme);
+tBtn.textContent = storedTheme === 'light' ? '☀️' : '🌙';
+
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme');
+  const nxt = cur === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', nxt);
+  localStorage.setItem('theme', nxt);
+  tBtn.textContent = nxt === 'light' ? '☀️' : '🌙';
+}
+
+const id = new URLSearchParams(location.search).get('id');
+function catEmoji(c){ return {Mechanical:'⚙️',Electrical:'⚡',Electronics:'🔌','Study Materials':'📚','Safety Gear':'🦺'}[c]||'📦'; }
+function timeAgo(d){ const s=(Date.now()-new Date(d))/1000; if(s<60) return 'just now'; if(s<3600) return ~~(s/60)+'m ago'; if(s<86400) return ~~(s/3600)+'h ago'; return ~~(s/86400)+'d ago'; }
+
+async function load(){
+  if(!id){
+    document.getElementById('productPage').innerHTML=`<div class="state-wrap"><div style="font-size:3rem">❌</div><p style="color:var(--muted)">No product ID.</p><a href="index.html" class="btn btn-primary">← Home</a></div>`;
+    return;
+  }
+  try{
+    const res=await fetch('http://localhost:3000/products/'+id);
+    if(!res.ok) throw new Error();
+    const p=await res.json();
+    render(p);
+    loadRelated(p.category, p._id);
+  }catch{
+    document.getElementById('productPage').innerHTML=`<div class="state-wrap"><div style="font-size:3rem">😞</div><p style="color:var(--muted)">Product not found or server offline.</p><a href="index.html" class="btn btn-primary">← Home</a></div>`;
+  }
+}
+
+function render(p){
+  document.title=p.name+' — SwapNest';
+  document.getElementById('bCat').textContent=p.category;
+  document.getElementById('bName').textContent=p.name;
+  const orig=Math.round(p.price*1.6);
+  const disc=Math.round((1-p.price/orig)*100);
+  const imgEl=p.image
+    ?`<img class="main-img" src="http://localhost:3000/uploads/${p.image}" alt="${p.name}">`
+    :`<div class="img-placeholder">${catEmoji(p.category)}</div>`;
+  const waMsg=encodeURIComponent(`Hi! I saw your listing "${p.name}" for ₹${p.price} on SwapNest. Is it still available?`);
+  const waLink=p.phone?`https://wa.me/91${p.phone}?text=${waMsg}`:null;
+
+  document.getElementById('productPage').innerHTML=`
+    <div class="img-panel">
+      ${imgEl}
+      <div class="img-thumbs">
+        <div class="thumb active">${catEmoji(p.category)}</div>
+        <div class="thumb">📦</div>
+        <div class="thumb">🏷️</div>
+      </div>
+    </div>
+    <div class="detail">
+      <div class="product-badge">${catEmoji(p.category)} ${p.category}</div>
+      <h1 class="product-title">${p.name}</h1>
+      <div class="stars">
+        <span class="star">★★★★☆</span>
+        <span class="star-count">(4.0) · Campus Verified</span>
+      </div>
+      <div class="price-block">
+        <div class="price-main">₹${Number(p.price).toLocaleString('en-IN')}</div>
+        <div class="price-orig">M.R.P ₹${orig.toLocaleString('en-IN')}</div>
+        <div class="price-discount">${disc}% OFF</div>
+      </div>
+      <hr>
+      <div class="info-list">
+        <div class="info-row"><span class="lbl">Category</span><span class="val">${p.category}</span></div>
+        <div class="info-row"><span class="lbl">Seller</span><span class="val">${p.seller||'Anonymous'}</span></div>
+        <div class="info-row"><span class="lbl">Listed</span><span class="val">${timeAgo(p.createdAt)}</span></div>
+        <div class="info-row"><span class="lbl">Condition</span><span class="val" style="color:var(--green)">✔ Used — Good</span></div>
+      </div>
+      ${p.description?`<div class="desc-box"><h4>Description</h4><p>${p.description}</p></div>`:''}
+      <div class="seller-box">
+        <div class="seller-av">${(p.seller||'A')[0].toUpperCase()}</div>
+        <div class="seller-info">
+          <div class="name">${p.seller||'Anonymous'}</div>
+          <div class="sub">BTech Student · Campus Seller</div>
+        </div>
+      </div>
+      <div class="actions">
+        ${p.status === 'sold'
+          ? `<div class="sold-out">SOLD OUT</div>`
+          : `<button class="btn btn-primary" style="padding:14px;font-size:1.05rem;font-weight:800;justify-content:center" onclick="openBuyModal()">Buy Now</button>
+             ${waLink ? `<a class="wa-btn" href="${waLink}" target="_blank"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>Chat on WhatsApp</a>` : ''}`
+        }
+        <button class="del-btn" style="margin-top:10px" onclick="openDelModal('${p._id}')">🗑️ Remove Listing (Seller Only)</button>
+      </div>
+      <div class="meta-row">
+        <span>🕒 ${timeAgo(p.createdAt)}</span>
+        <span>📍 Campus Marketplace</span>
+        <span>🔒 Safe Exchange</span>
+      </div>
+    </div>
+  `;
+}
+
+async function loadRelated(cat, ownId){
+  try{
+    const res=await fetch('http://localhost:3000/products?category='+encodeURIComponent(cat));
+    const data=await res.json();
+    const others=Array.isArray(data)?data.filter(p=>p._id!==ownId).slice(0,6):[];
+    if(!others.length) return;
+    document.getElementById('relSection').style.display='block';
+    document.getElementById('relGrid').innerHTML=others.map(p=>`
+      <a class="rcard" href="product.html?id=${p._id}">
+        <div class="rcard-img">${p.image?`<img src="http://localhost:3000/uploads/${p.image}" alt="${p.name}">`:catEmoji(p.category)}</div>
+        <div class="rcard-body">
+          <div class="rcard-name">${p.name}</div>
+          <div class="rcard-price">₹${Number(p.price).toLocaleString('en-IN')}</div>
+        </div>
+      </a>`).join('');
+  }catch{}
+}
+
+function openDelModal(i){ document.getElementById('modalBg').style.display='flex'; document.getElementById('confirmDel').onclick=()=>delProduct(i); }
+function closeDelModal(){ document.getElementById('modalBg').style.display='none'; }
+async function delProduct(i){
+  try{ await fetch('http://localhost:3000/products/'+i,{method:'DELETE'}); location.href='index.html'; }
+  catch{ alert('Delete failed. Try again.'); }
+}
+
+function openBuyModal(){ document.getElementById('buyModalBg').style.display='flex'; }
+function closeBuyModal(){ document.getElementById('buyModalBg').style.display='none'; }
+async function submitBuy(){
+  const n = document.getElementById('buyerName').value.trim();
+  const php = document.getElementById('bPhone').value.trim();
+  if(!n) return alert("Name required");
+  if(!/^\d{10}$/.test(php)) return alert("10-digit phone required");
+
+  const btn = document.getElementById('confirmBuyBtn');
+  btn.textContent = 'Processing…'; btn.disabled = true;
+
+  try {
+    const res = await fetch('http://localhost:3000/buy/'+id, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        buyerName: n, buyerPhone: php,
+        buyerEmail: document.getElementById('bEmail').value,
+        note: document.getElementById('bNote').value
+      })
+    });
+    const data = await res.json();
+    if(data.success){
+      alert('Order Confirmed!');
+      location.href = 'orders.html?phone=' + php;
+    } else {
+      alert(data.message);
+      btn.textContent = 'Confirm Order'; btn.disabled = false;
+    }
+  } catch {
+    alert('Server error');
+    btn.textContent = 'Confirm Order'; btn.disabled = false;
+  }
+}
+
+load();
+</script>
+</body>
+</html>

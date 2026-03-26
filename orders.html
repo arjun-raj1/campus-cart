@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders — SwapNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      /* Dark Theme (Devialet-Style) */
+      --bg: #030303; --navy: #0a0a0a; --surface: #141414; --card: #111111;
+      --border: #2f2f2f; --accent: #ffffff; --blue: #cccccc; --cyan: #ffffff;
+      --green: #00d87f; --yellow: #ffd60a; --red: #ff3b5c;
+      --text: #ffffff; --muted: #888888;
+      
+      --topbar-bg: #000000;
+      --hero-bg: radial-gradient(circle at center top, #1a1a1a 0%, #030303 100%);
+    }
+    
+    [data-theme="light"] {
+      --bg: #f4f5f8; --navy: #ffffff; --surface: #eaeef6; --card: #ffffff;
+      --border: #d1d5e0; --text: #1a1a3a; --muted: #5e667c;
+      --topbar-bg: #e2e6f0;
+      --hero-bg: linear-gradient(135deg, #f0f4fd, #dce4fa);
+    }
+
+    body { font-family:'Inter',sans-serif; font-weight: 500; background:var(--bg); color:var(--text); min-height:100vh; transition: background 0.3s, color 0.3s; }
+    a { text-decoration:none; color:inherit; }
+
+    .topbar { background:var(--topbar-bg); border-bottom:1px solid var(--border); padding:6px 24px; font-size:0.75rem; font-weight: 600; color:var(--muted); display:flex; justify-content:space-between; transition: background 0.3s; }
+    nav { background:var(--navy); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; gap:16px; flex-wrap: wrap; position:sticky; top:0; z-index:200; transition: background 0.3s; }
+    .logo { font-size:1.45rem; font-weight:900; letter-spacing: 2px; white-space: nowrap; color: var(--text); text-transform: uppercase; }
+    .logo span { font-weight:300; opacity:0.7; }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 24px; border-radius:30px; font-weight:700; font-size:0.8rem; cursor:pointer; border:none; transition:all 0.3s; text-transform:uppercase; letter-spacing:1.5px; }
+    .btn-primary { background: var(--text); color: var(--bg); }
+    .btn-primary:hover { opacity:0.9; transform:translateY(-1px); box-shadow: 0 8px 24px rgba(255,255,255,0.2); }
+    .btn-outline { background:transparent; border:1.5px solid var(--border); color:var(--text); }
+    .btn-outline:hover { border-color:var(--text); color:var(--text); }
+    .theme-toggle { background: transparent; border: 1.5px solid var(--border); color: var(--text); width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.15rem; transition: all 0.2s; }
+    .theme-toggle:hover { border-color:var(--accent); color:var(--accent); transform: rotate(15deg); }
+
+    .page-header { background:var(--hero-bg); border-bottom:1px solid var(--border); padding:48px 24px 36px; position:relative; overflow:hidden; transition: background 0.3s; }
+    .page-header::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 100%,rgba(255,255,255,0.05) 0%,transparent 70%); }
+    .page-header h1 { font-size:2.2rem; font-weight:900; position:relative; z-index:1; text-transform:uppercase; letter-spacing:2px; }
+    .page-header h1 span { color:var(--text); font-weight:300; }
+    .page-header p { color:var(--muted); font-size:0.875rem; margin-top:12px; position:relative; z-index:1; }
+
+    /* SEARCH BAR */
+    .search-section { max-width:900px; margin:28px auto; padding:0 24px; display:flex; gap:10px; }
+    .search-section input { flex:1; padding:11px 16px; background:var(--surface); border:1.5px solid var(--border); border-radius:9px; color:var(--text); font-size:0.875rem; font-family:'Inter',sans-serif; outline:none; transition:border 0.2s; }
+    .search-section input:focus { border-color:var(--accent); }
+    .search-section button { padding:11px 22px; border-radius:9px; background:linear-gradient(135deg,var(--accent),var(--blue)); color:white; border:none; font-weight:700; cursor:pointer; transition:opacity 0.2s; }
+    .search-section button:hover { opacity:0.9; }
+
+    /* ORDERS LIST */
+    .orders-wrap { max-width:900px; margin:0 auto; padding:0 24px 64px; }
+    .section-title { font-size:1.05rem; font-weight:800; display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .section-title::before { content:''; width:4px; height:20px; border-radius:4px; background:linear-gradient(180deg,var(--accent),var(--cyan)); }
+
+    .order-card {
+      background:var(--card); border:1px solid var(--border); border-radius:12px;
+      padding:24px; margin-bottom:16px; display:flex; gap:20px; align-items:flex-start;
+      transition:all 0.3s;
+    }
+    .order-card:hover { border-color:rgba(255,255,255,0.6); box-shadow:0 0 20px rgba(255,255,255,0.1); transform:translateY(-2px); }
+    .order-img {
+      width:80px; height:80px; border-radius:10px; flex-shrink:0;
+      background:var(--surface); display:flex; align-items:center; justify-content:center;
+      font-size:2rem; overflow:hidden;
+    }
+    .order-img img { width:100%; height:100%; object-fit:cover; }
+    .order-body { flex:1; }
+    .order-name { font-weight:700; font-size:0.95rem; margin-bottom:4px; }
+    .order-meta { display:flex; flex-wrap:wrap; gap:12px; font-size:0.78rem; color:var(--muted); margin-bottom:10px; }
+    .order-price { font-size:1.05rem; font-weight:800; color:var(--green); }
+    .status-pill {
+      display:inline-flex; align-items:center; gap:5px;
+      padding:3px 12px; border-radius:50px; font-size:0.72rem; font-weight:700; letter-spacing:0.4px;
+    }
+    .s-confirmed { background:rgba(0,194,255,0.12); color:var(--cyan); border:1px solid rgba(0,194,255,0.25); }
+    .s-completed  { background:rgba(0,216,127,0.12); color:var(--green); border:1px solid rgba(0,216,127,0.25); }
+    .s-cancelled  { background:rgba(255,59,92,0.12); color:#ff7090; border:1px solid rgba(255,59,92,0.25); }
+    .order-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; }
+    .wa-small {
+      display:inline-flex; align-items:center; gap:6px;
+      background:#25d366; color:white; padding:6px 14px; border-radius:7px;
+      font-size:0.78rem; font-weight:700; transition:opacity 0.2s;
+    }
+    .wa-small:hover { opacity:0.85; }
+    .cancel-btn { display:inline-flex; align-items:center; gap:5px; padding:6px 14px; border-radius:7px; background:rgba(255,59,92,0.1); border:1px solid rgba(255,59,92,0.3); color:#ff7090; font-size:0.78rem; font-weight:600; cursor:pointer; transition:all 0.2s; }
+    .cancel-btn:hover { background:rgba(255,59,92,0.2); }
+
+    /* ORDER ID */
+    .order-id { font-size:0.68rem; color:var(--muted); font-family:monospace; }
+
+    /* EMPTY */
+    .empty { text-align:center; padding:80px 20px; color:var(--muted); }
+    .empty div { font-size:3rem; margin-bottom:12px; }
+    .empty p { margin-bottom:20px; }
+
+    /* SPINNER */
+    .spin-wrap { display:flex; justify-content:center; padding:60px; }
+    .spin-wrap::after { content:''; width:36px; height:36px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:spin 0.7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* MODAL */
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.75); display:none; align-items:center; justify-content:center; z-index:300; }
+    .modal { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px; max-width:380px; width:90%; text-align:center; }
+    .modal h3 { font-size:1.15rem; font-weight:800; margin-bottom:8px; }
+    .modal p { color:var(--muted); font-size:0.875rem; margin-bottom:20px; }
+    .modal-btns { display:flex; gap:10px; justify-content:center; }
+
+    @media (max-width: 600px) {
+      .topbar { flex-direction: column; gap: 6px; text-align: center; }
+      nav { gap: 12px; }
+      .search-section { flex-direction: column; }
+      .search-section button { width: 100%; }
+      .page-header { padding: 32px 20px; text-align: center; }
+      .page-header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>🎓 BTech Student Marketplace</span>
+  <a href="index.html" style="color:var(--cyan)">← Home</a>
+</div>
+
+<nav>
+  <a href="index.html" class="logo">🔄 Swap<span>Nest</span></a>
+  <div style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+    <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+    <a href="index.html" class="btn btn-outline">Browse</a>
+    <a href="sell.html" class="btn btn-primary">+ Sell Item</a>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>🛒 My <span>Orders</span></h1>
+  <p>Track all your purchases. Enter your phone number to view your orders.</p>
+</div>
+
+<div class="search-section">
+  <input id="phoneInput" type="tel" placeholder="Enter your 10-digit phone number…" maxlength="10">
+  <button onclick="fetchOrders()">View My Orders</button>
+</div>
+
+<div class="orders-wrap">
+  <div id="ordersContainer">
+    <div class="empty">
+      <div>📋</div>
+      <p>Enter your phone number above to see your order history.</p>
+      <a href="index.html" class="btn btn-primary">Browse Marketplace</a>
+    </div>
+  </div>
+</div>
+
+<!-- CANCEL MODAL -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3>❌ Cancel Order?</h3>
+    <p>The item will be re-listed on the marketplace. This cannot be undone.</p>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="closeModal()">Keep Order</button>
+      <button class="btn" style="background:var(--red);color:white;" id="confirmCancel">Yes, Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // THEME SYSTEM
+  const tBtn = document.getElementById('themeToggle');
+  const storedTheme = localStorage.getItem('theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', storedTheme);
+  tBtn.textContent = storedTheme === 'light' ? '☀️' : '🌙';
+
+  function toggleTheme() {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const nxt = cur === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', nxt);
+    localStorage.setItem('theme', nxt);
+    tBtn.textContent = nxt === 'light' ? '☀️' : '🌙';
+  }
+
+  function catEmoji(c){ return {Mechanical:'⚙️',Electrical:'⚡',Electronics:'🔌','Study Materials':'📚','Safety Gear':'🦺'}[c]||'📦'; }
+  function timeAgo(d){ const s=(Date.now()-new Date(d))/1000; if(s<60) return 'just now'; if(s<3600) return ~~(s/60)+'m ago'; if(s<86400) return ~~(s/3600)+'h ago'; return ~~(s/86400)+'d ago'; }
+
+  async function fetchOrders() {
+    const phone = document.getElementById('phoneInput').value.trim();
+    if(!/^\d{10}$/.test(phone)){ alert('Enter a valid 10-digit phone number.'); return; }
+    const container = document.getElementById('ordersContainer');
+    container.innerHTML = '<div class="spin-wrap"></div>';
+    try {
+      const res  = await fetch(`http://localhost:3000/orders?phone=${phone}`);
+      const data = await res.json();
+      if(!data.length){
+        container.innerHTML = `<div class="empty"><div>📦</div><p>No orders found for this number.</p><a href="index.html" class="btn btn-primary">Browse Marketplace</a></div>`;
+        return;
+      }
+      renderOrders(data, phone);
+    } catch {
+      container.innerHTML = `<div class="empty"><div>⚠️</div><p>Cannot reach server. Is the backend running?</p></div>`;
+    }
+  }
+
+  function renderOrders(orders, phone) {
+    const container = document.getElementById('ordersContainer');
+    container.innerHTML = `
+      <div class="section-title">📦 ${orders.length} Order${orders.length!==1?'s':''} Found</div>
+      ${orders.map(o => {
+        const statusClass = {confirmed:'s-confirmed',completed:'s-completed',cancelled:'s-cancelled'}[o.status]||'s-confirmed';
+        const statusLabel = o.status.charAt(0).toUpperCase()+o.status.slice(1);
+        const waMsg = encodeURIComponent(`Hi ${o.seller}! I placed an order for "${o.productName}" (Order #${o._id}). Please confirm pickup details.`);
+        const waLink = o.sellerPhone ? `https://wa.me/91${o.sellerPhone}?text=${waMsg}` : null;
+        return `
+          <div class="order-card" id="card-${o._id}">
+            <div class="order-img">
+              ${o.productImage ? `<img src="http://localhost:3000/uploads/${o.productImage}" alt="${o.productName}">` : catEmoji(o.category)}
+            </div>
+            <div class="order-body">
+              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+                <div class="order-name">${o.productName}</div>
+                <span class="status-pill ${statusClass}">● ${statusLabel}</span>
+              </div>
+              <div class="order-meta">
+                <span>🏷️ ${o.category}</span>
+                <span>👤 Seller: ${o.seller}</span>
+                <span>🕒 ${timeAgo(o.orderedAt)}</span>
+              </div>
+              <div class="order-price">₹${Number(o.price).toLocaleString('en-IN')}</div>
+              <div class="order-id">Order ID: ${o._id}</div>
+              <div class="order-actions">
+                ${waLink && o.status==='confirmed' ? `<a class="wa-small" href="${waLink}" target="_blank">💬 Contact Seller</a>` : ''}
+                ${o.status==='confirmed' ? `<button class="cancel-btn" onclick="openCancel('${o._id}')">✕ Cancel</button>` : ''}
+                <a href="product.html?id=${o.productId}" class="btn-outline btn" style="font-size:0.78rem;padding:6px 14px;">View Item</a>
+              </div>
+              ${o.note ? `<div style="margin-top:8px;font-size:0.78rem;color:var(--muted)">📝 Note: ${o.note}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('')}`;
+  }
+
+  let cancelTarget = null;
+  function openCancel(id){ cancelTarget=id; document.getElementById('modalBg').style.display='flex'; document.getElementById('confirmCancel').onclick=doCancel; }
+  function closeModal(){ document.getElementById('modalBg').style.display='none'; cancelTarget=null; }
+
+  async function doCancel(){
+    if(!cancelTarget) return;
+    try{
+      await fetch(`http://localhost:3000/orders/${cancelTarget}/cancel`, {method:'PATCH'});
+      closeModal();
+      fetchOrders();
+    } catch{ alert('Cancel failed. Try again.'); }
+  }
+
+  // Auto-fetch if URL has ?phone=
+  const urlPhone = new URLSearchParams(location.search).get('phone');
+  if(urlPhone){ document.getElementById('phoneInput').value=urlPhone; fetchOrders(); }
+</script>
+</body>
+</html>
