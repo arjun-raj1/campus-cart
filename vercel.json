@@ -1,20 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "backend/server.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "frontend/**",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    { "src": "/products(.*)", "dest": "/backend/server.js" },
-    { "src": "/add-product", "dest": "/backend/server.js" },
-    { "src": "/buy/(.*)", "dest": "/backend/server.js" },
-    { "src": "/orders(.*)", "dest": "/backend/server.js" },
-    { "src": "/(.*)", "dest": "/frontend/$1" }
+  "rewrites": [
+    { "source": "/products(.*)", "destination": "/api/index.js" },
+    { "source": "/add-product", "destination": "/api/index.js" },
+    { "source": "/buy/(.*)", "destination": "/api/index.js" },
+    { "source": "/orders(.*)", "destination": "/api/index.js" },
+    { "source": "/(.*)", "destination": "/frontend/$1" }
   ]
 }
