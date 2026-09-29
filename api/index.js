@@ -3,7 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
-const mongoose = require('mongoose');
+const { createClient } = require('@supabase/supabase-js');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
@@ -31,45 +31,17 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-// ── MongoDB Connection ──────────────────────────────────────────────
-if (process.env.MONGODB_URI) {
-  mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✅ MongoDB Connected'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+// ── Supabase Config ──────────────────────────────────────────────
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_KEY || '';
+let supabase;
+
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+  console.log('✅ Supabase Client Initialized');
+} else {
+  console.warn('⚠️ Missing SUPABASE_URL or SUPABASE_KEY. Database not connected.');
 }
-
-// ── Mongoose Schemas & Models ──────────────────────────────────────────────
-const productSchema = new mongoose.Schema({
-  name: { type: String, default: "" },
-  price: { type: Number, default: 0 },
-  category: { type: String, default: "" },
-  description: { type: String, default: "" },
-  seller: { type: String, default: "Anonymous" },
-  phone: { type: String, default: "" },
-  image: { type: String, default: "" },
-  status: { type: String, default: "available" },
-  createdAt: { type: Date, default: Date.now }
-});
-
-const orderSchema = new mongoose.Schema({
-  productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
-  productName: String,
-  productImage: String,
-  category: String,
-  price: Number,
-  seller: String,
-  sellerPhone: String,
-  buyerName: { type: String, default: "Anonymous" },
-  buyerPhone: { type: String, default: "" },
-  buyerEmail: { type: String, default: "" },
-  note: { type: String, default: "" },
-  status: { type: String, default: "confirmed" },
-  orderedAt: { type: Date, default: Date.now }
-});
-
-// Avoid model recompilation if it exists
-const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
-const Order = mongoose.models.Order || mongoose.model('Order', orderSchema);
 
 // ══════════════════════════════════════════════════════════════
 //  API ROUTES (Standardized)
@@ -79,26 +51,41 @@ const router = express.Router();
 
 router.get("/health", (req, res) => res.json({ status: "ok", env: process.env.NODE_ENV || 'production' }));
 
+// List products (optional ?category= filter)
 router.get("/products", async (req, res) => {
   try {
-    let query = {};
-    if (req.query.category && req.query.category !== "All") query.category = req.query.category;
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    if (!supabase) throw new Error("Database not connected");
+    let query = supabase.from('products').select('*').order('createdAt', { ascending: false });
+    
+    if (req.query.category && req.query.category !== "All") {
+      query = query.eq('category', req.query.category);
+    }
+    
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    const products = data.map(p => ({ ...p, _id: p.id }));
     res.json(products);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// Single product
 router.get("/products/:id", async (req, res) => {
   try {
-    const p = await Product.findById(req.params.id);
-    if (!p) return res.status(404).json({ message: "Not found" });
-    res.json(p);
+    if (!supabase) throw new Error("Database not connected");
+    const { data, error } = await supabase.from('products').select('*').eq('id', req.params.id).single();
+    if (error) throw error;
+    if (!data) return res.status(404).json({ message: "Not found" });
+    
+    res.json({ ...data, _id: data.id });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// Add product
 router.post("/add-product", upload.single("image"), async (req, res) => {
   try {
-    const p = new Product({
+    if (!supabase) throw new Error("Database not connected");
+    const { data, error } = await supabase.from('products').insert([{
       name: req.body.name || "",
       price: Number(req.body.price) || 0,
       category: req.body.category || "",
@@ -107,50 +94,93 @@ router.post("/add-product", upload.single("image"), async (req, res) => {
       phone: req.body.phone || "",
       image: req.file ? req.file.path : "",
       status: "available"
-    });
-    await p.save();
-    res.json({ success: true, message: "Listed!", id: p._id });
+    }]).select().single();
+    
+    if (error) throw error;
+    res.json({ success: true, message: "Listed!", id: data.id });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+// Delete product
 router.delete("/products/:id", async (req, res) => {
   try {
-    await Product.findByIdAndDelete(req.params.id);
+    if (!supabase) throw new Error("Database not connected");
+    const { error } = await supabase.from('products').delete().eq('id', req.params.id);
+    if (error) throw error;
     res.json({ success: true });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// ══════════════════════════════════════════════════════════════
+//  BUYING / ORDER ROUTES
+// ══════════════════════════════════════════════════════════════
+
+// Place an order (buy a product)
 router.post("/buy/:productId", async (req, res) => {
   try {
-    const p = await Product.findById(req.params.productId);
-    if (!p) return res.status(404).json({ success: false, message: "Not found" });
-    const order = new Order({
-      productId: p._id, productName: p.name, productImage: p.image,
-      category: p.category, price: p.price, seller: p.seller, sellerPhone: p.phone,
-      buyerName: req.body.buyerName, buyerPhone: req.body.buyerPhone,
-      buyerEmail: req.body.buyerEmail, note: req.body.note, status: "confirmed"
-    });
-    await order.save();
-    p.status = "sold"; await p.save();
-    res.json({ success: true, message: "Order placed!", orderId: order._id });
+    if (!supabase) throw new Error("Database not connected");
+    
+    // Get product
+    const { data: product, error: pError } = await supabase.from('products').select('*').eq('id', req.params.productId).single();
+    if (pError || !product) return res.status(404).json({ success: false, message: "Not found" });
+    
+    // Create Order
+    const { data: order, error: oError } = await supabase.from('orders').insert([{
+      productId: product.id,
+      productName: product.name,
+      productImage: product.image,
+      category: product.category,
+      price: product.price,
+      seller: product.seller,
+      sellerPhone: product.phone,
+      buyerName: req.body.buyerName || "Anonymous",
+      buyerPhone: req.body.buyerPhone || "",
+      buyerEmail: req.body.buyerEmail || "",
+      note: req.body.note || "",
+      status: "confirmed"
+    }]).select().single();
+    
+    if (oError) throw oError;
+
+    // Mark product as sold
+    await supabase.from('products').update({ status: 'sold' }).eq('id', product.id);
+
+    res.json({ success: true, message: "Order placed!", orderId: order.id });
   } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
+// List all orders (optionally filter by buyer phone ?phone=)
 router.get("/orders", async (req, res) => {
   try {
-    let q = {}; if (req.query.phone) q.buyerPhone = req.query.phone;
-    const o = await Order.find(q).sort({ orderedAt: -1 });
-    res.json(o);
+    if (!supabase) throw new Error("Database not connected");
+    let query = supabase.from('orders').select('*').order('orderedAt', { ascending: false });
+    if (req.query.phone) {
+      query = query.eq('buyerPhone', req.query.phone);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    const orders = data.map(o => ({ ...o, _id: o.id }));
+    res.json(orders);
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
 
+// Cancel order (buyer cancels)
 router.patch("/orders/:id/cancel", async (req, res) => {
   try {
-    const o = await Order.findById(req.params.id);
-    if (!o) return res.status(404).json({ message: "Not found" });
-    o.status = "cancelled"; await o.save();
-    const p = await Product.findById(o.productId);
-    if (p) { p.status = "available"; await p.save(); }
+    if (!supabase) throw new Error("Database not connected");
+    
+    // Get order
+    const { data: order, error: oError } = await supabase.from('orders').select('*').eq('id', req.params.id).single();
+    if (oError || !order) return res.status(404).json({ message: "Not found" });
+
+    // Update order status
+    const { error: uError } = await supabase.from('orders').update({ status: 'cancelled' }).eq('id', order.id);
+    if (uError) throw uError;
+
+    // Re-mark product as available
+    await supabase.from('products').update({ status: 'available' }).eq('id', order.productId);
+
     res.json({ success: true });
   } catch (e) { res.status(500).json({ message: e.message }); }
 });
@@ -166,4 +196,3 @@ app.use((req, res) => {
 
 // Export the Express app
 module.exports = app;
-
