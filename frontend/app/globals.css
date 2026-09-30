@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* CampusCart Premium Trust & Safety Theme */
+  --bg:      #f8fafc; /* Soft Gray */
+  --navy:    #0f172a; /* Campus Navy */
+  --surface: #ffffff;
+  --card:    #ffffff;
+  --border:  #e2e8f0;
+  
+  --accent:  #10b981; /* Emerald Green (Trust) */
+  --accent2: #059669;
+  
+  --blue:    #3b82f6; /* Action Blue */
+  --cyan:    #0ea5e9;
+  --green:   #10b981;
+  --yellow:  #f59e0b;
+  --red:     #ef4444;
+  
+  --text:    #0f172a; /* Dark Navy Text */
+  --muted:   #64748b; /* Slate Gray */
+  --r:       12px;
+  
+  --topbar-bg: #ffffff;
+  --hero-bg: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  --strip-bg: #ffffff;
+  --strip-border: #e2e8f0;
+  --input-bg: #f1f5f9;
+  --shadow: 0 10px 25px rgba(15, 23, 42, 0.05);
+}
+
+[data-theme="dark"] {
+  --bg:      #020617;
+  --navy:    #0f172a;
+  --surface: #0f172a;
+  --card:    #1e293b;
+  --border:  #334155;
+  --text:    #f8fafc;
+  --muted:   #94a3b8;
+  
+  --topbar-bg: #0f172a;
+  --hero-bg: linear-gradient(135deg, #020617 0%, #0f172a 100%);
+  --strip-bg: #1e293b;
+  --strip-border: #334155;
+  --input-bg: #0f172a;
+  --shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+body { 
+  font-family: 'Outfit', sans-serif; 
+  font-weight: 500; 
+  background: var(--bg); 
+  color: var(--text); 
+  min-height: 100vh; 
+  transition: background 0.3s, color 0.3s; 
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 28px; border-radius: 8px; font-weight: 600;
+  font-size: 0.95rem; cursor: pointer; border: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.5px;
+}
+.btn-primary { background: var(--accent); color: #ffffff; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3); background: var(--accent2); }
+.btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--blue); color: var(--blue); }
+
+/* Theme toggle */
+.theme-toggle {
+  background: var(--surface); border: 1.5px solid var(--border);
+  color: var(--text); width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1.2rem; transition: all 0.2s;
+}
+.theme-toggle:hover { border-color: var(--blue); color: var(--blue); transform: scale(1.05); }
+
+/* Trust Badges */
+.badge-verified {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: rgba(16, 185, 129, 0.1); color: var(--accent);
+  padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+
+/* Glass Cards */
+.glass-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+/* Spinner */
+.spinner::after {
+  content: ''; display: block; width: 40px; height: 40px; border-radius: 50%;
+  border: 3px solid var(--border); border-top-color: var(--blue);
+  animation: spin 0.8s ease-in-out infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.state-wrap {
+  grid-column: 1/-1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; padding: 100px 20px; gap: 16px; text-align: center;
+}
